@@ -22,10 +22,12 @@ const CARGO_GIT_CACHE_DIR: &str = "/root/.cargo/git";
 const CARGO_REGISTRY_CACHE_DIR: &str = "/root/.cargo/registry";
 const CARGO_TARGET_CACHE_DIR: &str = "target";
 
+const NIX_ARCHIVE: &str = "ef56e777fedaa4da8c66a150081523c5de1e0171";
+
 pub struct RustProvider {}
 
 impl Provider for RustProvider {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "rust"
     }
 
@@ -75,6 +77,8 @@ impl RustProvider {
         if RustProvider::should_use_musl(app, env)? {
             setup.add_nix_pkgs(&[Pkg::new("musl"), Pkg::new("musl.dev")]);
         }
+
+        setup.set_nix_archive(NIX_ARCHIVE.to_string());
 
         Ok(setup)
     }
@@ -311,7 +315,7 @@ impl RustProvider {
     }
 
     fn should_make_wasm32_wasi(app: &App, _env: &Environment) -> bool {
-        let re_target = Regex::new(r##"target\s*=\s*"wasm32-wasi""##).expect("BUG: Broken regex");
+        let re_target = Regex::new(r#"target\s*=\s*"wasm32-wasi""#).expect("BUG: Broken regex");
 
         matches!(app.find_match(&re_target, ".cargo/config.toml"), Ok(true))
     }

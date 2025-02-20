@@ -9,7 +9,7 @@ title: Installation
 Install Nixpacks with [Homebrew](https://brew.sh/) (macOS Only)
 
 ```sh
-brew install railwayapp/tap/nixpacks
+brew install nixpacks
 ```
 
 ## MacPorts
@@ -27,6 +27,8 @@ Download Nixpacks from GH releases and install automatically
 ```sh
 curl -sSL https://nixpacks.com/install.sh | bash
 ```
+
+This works across all supported platforms.
 
 ## PowerShell
 
@@ -53,6 +55,10 @@ Install Nixpacks from Scoop using the [official bucket](https://github.com/Scoop
 ```powershell
 scoop install nixpacks
 ```
+
+## Windows
+
+Nixpacks provides `.msi` files provided in each [release](https://github.com/railwayapp/nixpacks/releases).
 
 ## Source
 

@@ -16,7 +16,7 @@ You can have more than just the auto-detected provider contribute to the build b
 providers = ["...", "python"]
 ```
 
-You can also override the the auto-detected providers by leaving `"..."` out of the array.
+You can also override the auto-detected providers by leaving `"..."` out of the array.
 
 ```toml
 # Only the go provider will be run
@@ -25,11 +25,12 @@ providers = ["go"]
 
 ## Install additional packages
 
-You can easily install additional Nix or Apt packages so that they are available during the the build or at runtime. Packages are typically installed in the setup phase.
+You can easily install additional Nix or Apt packages so that they are available during the build or at runtime. Packages are typically installed in the setup phase.
 
 ```toml
 [phases.setup]
 nixPkgs = ["...", "ffmpeg"] # Install the ffmpeg package from Nix
+nixLibs = ["...", "gcc-unwrapped"] # Install the gcc-unwrapped package from Nix and add it to the LD_LIBRARY_PATH
 aptPkgs = ["...", "wget"]   # Install the wget package with apt-get
 ```
 
@@ -82,3 +83,9 @@ dependsOn = ["...", "lint"]
 cmds = ["yarn run test"]
 dependsOn = ["build"]
 ```
+
+## Multiple Architectures
+
+Nixpacks does not support multiple architectures in a single build.
+
+If you need to build for multiple architectures, you will need to create a separate build for each architecture and then generate your own multi-architecture build using `docker manifest`. There's a [GitHub action which does this](https://github.com/iloveitaly/github-action-nixpacks) and is a great example to pattern off if you need a multi-architecture build.

@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     utils.url = "github:gytis-ivaskevicius/flake-utils-plus";
   };
 
@@ -20,7 +20,7 @@
         let
           package = with nixpkgs; rustPlatform.buildRustPackage {
             pname = "nixpacks";
-            version = "1.12.0";
+            version = "1.33.0";
             src = ./.;
             cargoLock = {
               lockFile = ./Cargo.lock;

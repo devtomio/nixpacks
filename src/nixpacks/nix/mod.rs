@@ -6,9 +6,9 @@ use crate::nixpacks::plan::phase::{Phase, Phases};
 pub mod pkg;
 
 // This line is automatically updated.
-// Last Modified: 2023-01-02 17:04:24 UTC+0000
-// https://github.com/NixOS/nixpkgs/commit/293a28df6d7ff3dec1e61e37cc4ee6e6c0fb0847
-pub const NIXPKGS_ARCHIVE: &str = "293a28df6d7ff3dec1e61e37cc4ee6e6c0fb0847";
+// Last Modified: 2023-09-17 17:13:39 UTC+0000
+// https://github.com/NixOS/nixpkgs/commit/5148520bfab61f99fd25fb9ff7bfbb50dad3c9db
+pub const NIXPKGS_ARCHIVE: &str = "5148520bfab61f99fd25fb9ff7bfbb50dad3c9db";
 
 // Version of the Nix archive that uses OpenSSL 1.1
 pub const NIXPACKS_ARCHIVE_LEGACY_OPENSSL: &str = "a0b7e70db7a55088d3de0cc370a59f9fbcc906c3";
@@ -70,7 +70,10 @@ pub fn create_nix_expressions_for_phases(phases: &Phases) -> BTreeMap<String, St
     archive_to_packages
         .iter()
         .fold(BTreeMap::new(), |mut acc, g| {
-            acc.insert(nix_file_name(&g.archive), nix_expression_for_group(g));
+            acc.insert(
+                nix_file_name(g.archive.as_ref()),
+                nix_expression_for_group(g),
+            );
             acc
         })
 }
@@ -82,7 +85,7 @@ pub fn nix_file_names_for_phases(phases: &Phases) -> Vec<String> {
         .filter(|p| p.uses_nix())
         .map(|p| p.nixpkgs_archive.clone())
         .collect::<BTreeSet<_>>();
-    archives.iter().map(nix_file_name).collect()
+    archives.iter().map(|a| nix_file_name(a.as_ref())).collect()
 }
 
 /// Returns all the Nix expression files used to install Nix dependencies for each phase.
@@ -101,7 +104,7 @@ pub fn setup_files_for_phases(phases: &Phases) -> Vec<String> {
 }
 
 /// Generates the filename for each Nix expression file.
-fn nix_file_name(archive: &Option<String>) -> String {
+fn nix_file_name(archive: Option<&String>) -> String {
     match archive {
         Some(archive) => format!("nixpkgs-{archive}.nix"),
         None => "nixpkgs.nix".to_string(),

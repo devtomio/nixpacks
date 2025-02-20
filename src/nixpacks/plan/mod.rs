@@ -18,7 +18,7 @@ pub mod merge;
 pub mod phase;
 pub mod pretty_print;
 mod topological_sort;
-mod utils;
+pub mod utils;
 
 /// Types that impl this trait can generate build plans.
 pub trait PlanGenerator {
@@ -212,7 +212,7 @@ impl BuildPlan {
     /// Ensures correctness of the Phases map.
     pub fn resolve_phase_names(&mut self) {
         let phases = self.phases.get_or_insert(BTreeMap::default());
-        for (name, phase) in phases.iter_mut() {
+        for (name, phase) in &mut *phases {
             phase.set_name(name);
         }
     }
@@ -220,7 +220,7 @@ impl BuildPlan {
     /// Strip keys out of the Phases map before serializing with to_json or to_toml.
     pub fn remove_phase_names(&mut self) {
         let phases = self.phases.get_or_insert(BTreeMap::default());
-        for (_, phase) in phases.iter_mut() {
+        for phase in (*phases).values_mut() {
             phase.name = None;
         }
     }
@@ -305,7 +305,7 @@ impl BuildPlan {
 
         self.resolve_phase_names();
         let phases = self.phases.get_or_insert(Phases::default());
-        for (_, phase) in phases.iter_mut() {
+        for phase in (*phases).values_mut() {
             phase.pin(use_debian);
         }
 
@@ -405,6 +405,47 @@ mod test {
         .unwrap();
 
         assert_eq!(result, env_plan);
+    }
+
+    #[test]
+    fn test_to_json_and_from_json() {
+        let original_plan = BuildPlan::from_toml(
+            r#"
+            [phases.setup]
+            nixPkgs = ["nodejs", "yarn"]
+            aptPkgs = ["git"]
+
+            [phases.install]
+            cmds = ["yarn install"]
+            cacheDirectories = ["node_modules"]
+            dependsOn = ["setup"]
+
+            [phases.build]
+            cmds = ["yarn build"]
+            dependsOn = ["install"]
+
+            [start]
+            cmd = "yarn start"
+            "#,
+        )
+        .unwrap();
+
+        let json_str = original_plan.to_json().unwrap();
+        let deserialized_plan = BuildPlan::from_json(json_str).unwrap();
+
+        assert_eq!(original_plan, deserialized_plan);
+        assert_eq!(
+            deserialized_plan.get_phase("setup").unwrap().nix_pkgs,
+            Some(vec!["nodejs".to_string(), "yarn".to_string()])
+        );
+        assert_eq!(
+            deserialized_plan.get_phase("setup").unwrap().apt_pkgs,
+            Some(vec!["git".to_string()])
+        );
+        assert_eq!(
+            deserialized_plan.start_phase.unwrap().cmd.unwrap(),
+            "yarn start".to_string()
+        );
     }
 
     #[test]

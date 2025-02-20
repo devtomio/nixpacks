@@ -1,6 +1,7 @@
 ---
 source: tests/generate_plan_tests.rs
 expression: plan
+snapshot_kind: text
 ---
 {
   "providers": [],
@@ -42,8 +43,8 @@ expression: plan
     "setup": {
       "name": "setup",
       "nixPkgs": [
-        "nodejs-18_x",
-        "npm-6_x",
+        "nodejs_18",
+        "npm-9_x",
         "openssl"
       ],
       "nixOverlays": [

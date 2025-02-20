@@ -12,6 +12,8 @@ Java is detected if a `pom.[xml|atom|clj|groovy|rb|scala|yaml|yml]` or `gradlew`
 
 The following major JDK versions are available
 
+- `21`
+- `20`
 - `19`
 - `17` (Default)
 - `11`
@@ -23,7 +25,8 @@ The version can be overridden by setting the `NIXPACKS_JDK_VERSION` environment 
 
 The following major Gradle versions are available
 
-- `7` (Default)
+- `8` (Default)
+- `7`
 - `6`
 - `5`
 - `4`
@@ -41,7 +44,7 @@ If Maven is found:
 If Gradle is found:
 
 ```
-./gradlew build
+./gradlew clean build -x check -x test
 ```
 
 ## Start
@@ -67,11 +70,11 @@ java -Dserver.port=$PORT $JAVA_OPTS -jar target/*jar
 If Gradle is found:
 
 ```
-java $JAVA_OPTS -jar build/libs/*.jar
+java $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)
 ```
 
 If Gradle and Spring Boot is found:
 
 ```
-java $JAVA_OPTS -jar -Dserver.port=$PORT build/libs/*.jar
+java $JAVA_OPTS -jar -Dserver.port=$PORT $(ls -1 build/libs/*jar | grep -v plain)
 ```

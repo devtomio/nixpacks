@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install jq
         run: sudo apt-get install -y jq
@@ -40,7 +40,7 @@ jobs:
           echo "::set-output name=url::$URL"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.COMMITTER_TOKEN }}
           title: Update nixpkgs archive

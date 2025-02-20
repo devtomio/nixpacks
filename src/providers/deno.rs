@@ -28,13 +28,13 @@ pub struct DenoJson {
 pub struct DenoProvider {}
 
 impl Provider for DenoProvider {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "deno"
     }
 
     fn detect(&self, app: &App, _env: &Environment) -> Result<bool> {
         let re = Regex::new(
-            r##"import .+ from (?:"|'|`)https://deno.land/[^"`']+\.(?:ts|js|tsx|jsx)(?:"|'|`);?"##,
+            r#"import .+ from (?:"|'|`)https://deno.land/[^"`']+\.(?:ts|js|tsx|jsx)(?:"|'|`);?"#,
         )
         .unwrap();
         Ok(app.includes_file("deno.json")
@@ -82,7 +82,7 @@ impl DenoProvider {
         if app.includes_file("deno.json") || app.includes_file("deno.jsonc") {
             let deno_json: DenoJson = app
                 .read_json("deno.json")
-                .or_else(|_| app.read_json("deno.jsonc"))?;
+                .or_else(|_| app.read_jsonc("deno.jsonc"))?;
 
             if let Some(tasks) = deno_json.tasks {
                 if let Some(start) = tasks.start {

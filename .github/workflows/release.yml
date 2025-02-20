@@ -27,13 +27,13 @@ jobs:
           echo "version is: ${{ env.NIXPACKS_VERSION }}"
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v3.7.2
+        uses: mikepenz/release-changelog-builder-action@v5
         with:
           configuration: ".github/changelog-configuration.json"
         env:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Create GitHub release
         id: release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -56,6 +56,8 @@ jobs:
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
     continue-on-error: true
+    env:
+      RUSTFLAGS: ${{ matrix.rustflags || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -83,19 +85,22 @@ jobs:
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
+            rustflags: -C target-feature=+crt-static
 
           - target: i686-pc-windows-msvc
             os: windows-latest
+            rustflags: -C target-feature=+crt-static
 
           - target: aarch64-pc-windows-msvc
             os: windows-latest
+            rustflags: -C target-feature=+crt-static
 
           # - target: x86_64-unknown-freebsd
           #   os: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 1
 
@@ -134,7 +139,7 @@ jobs:
     #   run: for file in nixpacks-*/nixpacks-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
 
     - name: Upload release archive
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -156,6 +161,32 @@ jobs:
         tag: ${{ needs.create-release.outputs.nixpacks_version }}
         file: nixpacks-${{ needs.create-release.outputs.nixpacks_version }}-amd64.deb
 
+    - name: Install cargo-wix
+      continue-on-error: true
+      # aarch64 is not supported by cargo-wix since it requires wix v4
+      # see https://github.com/volks73/cargo-wix/issues/174
+      if: matrix.os == 'windows-latest' && matrix.target != 'aarch64-pc-windows-msvc'
+      run: cargo install cargo-wix
+      env:
+        # cargo-wix does not require static crt
+        RUSTFLAGS: ""
+
+    - name: Create windows installers
+      continue-on-error: true
+      if: matrix.os == 'windows-latest' && matrix.target != 'aarch64-pc-windows-msvc'
+      run: >
+        cargo wix -v --no-build --nocapture
+        --target ${{ matrix.target }}
+        --output nixpacks-${{ needs.create-release.outputs.nixpacks_version }}-${{ matrix.target }}.msi
+
+    - name: Upload windows installers
+      continue-on-error: true
+      if: matrix.os == 'windows-latest' && matrix.target != 'aarch64-pc-windows-msvc'
+      uses: svenstaro/upload-release-action@v2
+      with:
+        tag: ${{ needs.create-release.outputs.nixpacks_version }}
+        file: nixpacks-${{ needs.create-release.outputs.nixpacks_version }}-${{ matrix.target }}.msi
+
     - name: Set SHA
       if: matrix.config.os == 'macos-latest'
       id: shasum
@@ -163,7 +194,7 @@ jobs:
         echo ::set-output name=sha::"$(shasum -a 256 ./release/gitui-mac.tar.gz | awk '{printf $1}')"
 
     - name: Update homebrew tap
-      uses: mislav/bump-homebrew-formula-action@v2
+      uses: mislav/bump-homebrew-formula-action@v3
       if: "matrix.target == 'x86_64-apple-darwin' && !contains(github.ref, '-')"
       with:
         formula-name: nixpacks

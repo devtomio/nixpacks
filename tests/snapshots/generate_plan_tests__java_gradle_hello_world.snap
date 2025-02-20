@@ -16,7 +16,7 @@ expression: plan
         "setup"
       ],
       "cmds": [
-        "./gradlew build -x check"
+        "./gradlew clean build -x check -x test"
       ],
       "cacheDirectories": [
         "/root/.gradle"
@@ -26,13 +26,13 @@ expression: plan
       "name": "setup",
       "nixPkgs": [
         "jdk17",
-        "gradle"
+        "gradle_7"
       ],
       "nixOverlays": [],
       "nixpkgsArchive": "[archive]"
     }
   },
   "start": {
-    "cmd": "java $JAVA_OPTS -jar  build/libs/*.jar"
+    "cmd": "java $JAVA_OPTS -jar  $(ls -1 build/libs/*jar | grep -v plain)"
   }
 }

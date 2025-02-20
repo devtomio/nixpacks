@@ -30,7 +30,7 @@ pub struct RubyProvider {}
 const BUNDLE_CACHE_DIR: &str = "/root/.bundle/cache";
 
 impl Provider for RubyProvider {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ruby"
     }
 
@@ -262,7 +262,7 @@ impl RubyProvider {
             return Ok(format!("ruby-{}", value.get(1).unwrap().as_str()));
         }
         let re_gemfile_lock =
-            Regex::new(r#"ruby ((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))[^>]"#).unwrap();
+            Regex::new(r"ruby ((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))[^>]").unwrap();
         let gemfile_lock = app.read_file("Gemfile.lock").unwrap_or_default();
         if let Some(value) = re_gemfile_lock.captures(&gemfile_lock) {
             return Ok(format!("ruby-{}", value.get(1).unwrap().as_str()));

@@ -73,9 +73,11 @@ struct Args {
 }
 
 /// The valid subcommands passed to `nixpacks`, and their arguments.
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate a build plan for an app
+    /// Generate a build plan for an app.
+    /// Generated plan will be outputted to stdout, while warnings might be outputted to stderr.
     Plan {
         /// App source
         path: String,
@@ -140,6 +142,27 @@ enum Commands {
         #[arg(long)]
         cache_from: Option<String>,
 
+        /// Specify host for Docker client
+        #[arg(long)]
+        docker_host: Option<String>,
+
+        /// Adds hosts to the Docker build
+        #[arg(long, global = true)]
+        add_host: Vec<String>,
+
+        /// Specify if Docker client should verify the TLS (Transport Layer Security) certificates
+        #[arg(long)]
+        docker_tls_verify: Option<String>,
+
+        /// Specify output destination for Docker build.
+        /// https://docs.docker.com/reference/cli/docker/buildx/build/#output
+        #[arg(long)]
+        docker_output: Option<String>,
+
+        /// Specify the path to the Docker client certificates
+        #[arg(long)]
+        docker_cert_path: Option<String>,
+
         /// Enable writing cache metadata into the output image
         #[arg(long)]
         inline_cache: bool,
@@ -147,6 +170,16 @@ enum Commands {
         /// Do not error when no start command can be found
         #[arg(long)]
         no_error_without_start: bool,
+
+        /// Limit the CPU CFS (Completely Fair Scheduler) quota.
+        /// Passed directly to the docker build command
+        #[arg(long)]
+        cpu_quota: Option<String>,
+
+        /// Memory limit.
+        /// Passed directly to the docker build command
+        #[arg(long)]
+        memory: Option<String>,
 
         /// Display more info during build
         #[arg(long, short)]
@@ -168,9 +201,9 @@ async fn main() -> Result<()> {
     // CLI build plan
     let mut cli_plan = BuildPlan::default();
     if !args.pkgs.is_empty() || !args.libs.is_empty() || !args.apt.is_empty() {
-        let mut setup = Phase::setup(Some(vec![pkgs, vec![Pkg::new("...")]].concat()));
-        setup.apt_pkgs = Some(vec![args.apt, vec!["...".to_string()]].concat());
-        setup.nix_libs = Some(vec![args.libs, vec!["...".to_string()]].concat());
+        let mut setup = Phase::setup(Some([pkgs, [Pkg::new("...")].to_vec()].to_vec().concat()));
+        setup.apt_pkgs = Some([args.apt, ["...".to_string()].to_vec()].to_vec().concat());
+        setup.nix_libs = Some([args.libs, ["...".to_string()].to_vec()].to_vec().concat());
         cli_plan.add_phase(setup);
     }
     if let Some(install_cmds) = args.install_cmd {
@@ -234,8 +267,15 @@ async fn main() -> Result<()> {
             no_cache,
             incremental_cache_image,
             cache_from,
+            docker_host,
+            docker_tls_verify,
+            docker_output,
+            add_host,
+            docker_cert_path,
             inline_cache,
             no_error_without_start,
+            cpu_quota,
+            memory,
             verbose,
         } => {
             let verbose = verbose || args.env.contains(&"NIXPACKS_VERBOSE=1".to_string());
@@ -260,8 +300,15 @@ async fn main() -> Result<()> {
                 current_dir,
                 inline_cache,
                 cache_from,
+                docker_host,
+                docker_tls_verify,
+                docker_output,
+                docker_cert_path,
                 no_error_without_start,
                 incremental_cache_image,
+                cpu_quota,
+                add_host,
+                memory,
                 verbose,
             };
             create_docker_image(&path, env, &options, build_options).await?;

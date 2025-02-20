@@ -18,10 +18,18 @@ pub struct DockerBuilderOptions {
     pub current_dir: bool,
     pub no_error_without_start: bool,
     pub incremental_cache_image: Option<String>,
+    pub cpu_quota: Option<String>,
+    pub memory: Option<String>,
     pub verbose: bool,
+    pub docker_host: Option<String>,
+    pub docker_tls_verify: Option<String>,
+    pub docker_output: Option<String>,
+    pub add_host: Vec<String>,
+    pub docker_cert_path: Option<String>,
 }
 
 mod cache;
+pub mod docker_helper;
 pub mod docker_image_builder;
 mod dockerfile_generation;
 pub mod file_server;

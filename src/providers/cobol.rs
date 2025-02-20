@@ -20,7 +20,7 @@ const DEFAULT_COBOL_COMPILE_ARGS: &str = "-x -o";
 pub struct CobolProvider {}
 
 impl Provider for CobolProvider {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "cobol"
     }
 
@@ -90,13 +90,10 @@ impl CobolProvider {
     }
 
     fn normalized_path(path: &PathBuf) -> Option<PathBuf> {
-        if let Some(normalized_path) = path.to_slash() {
-            let path_string = PathBuf::from_str(normalized_path.to_string().as_str());
-
-            if let Ok(path) = path_string {
-                return Some(path);
-            }
-        }
-        None
+        path.to_slash().and_then(|normalized_path| {
+            PathBuf::from_str(normalized_path.as_ref())
+                .map(Some)
+                .unwrap_or(None)
+        })
     }
 }
